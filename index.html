@@ -1,0 +1,1378 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>트윗계정 메이커</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef2f5;
+      --panel: #ffffff;
+      --line: #c4cfd6;
+      --text: #0f1419;
+      --muted: #536471;
+      --blue: #1d9bf0;
+      --blue-soft: #e8f5fe;
+      --green: #00ba7c;
+      --rose: #f91880;
+      --shadow: 0 18px 45px rgba(15, 20, 25, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(29, 155, 240, 0.12), transparent 34%),
+        linear-gradient(315deg, rgba(0, 186, 124, 0.12), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: minmax(340px, 440px) minmax(360px, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .workspace,
+    .preview-shell {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(217, 225, 232, 0.9);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .workspace {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .topbar {
+      padding: 18px 18px 14px;
+      border-bottom: 2px solid var(--line);
+      background: var(--panel);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .section {
+      padding: 18px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    .section:last-child {
+      border-bottom: 0;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    input[type="text"],
+    input[type="color"],
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      padding: 10px 11px;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(29, 155, 240, 0.16);
+    }
+
+    input[type="color"] {
+      height: 42px;
+      padding: 4px;
+      cursor: pointer;
+    }
+
+    textarea {
+      min-height: 280px;
+      resize: vertical;
+      line-height: 1.45;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .file-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .file-box {
+      position: relative;
+      min-height: 92px;
+      border: 1px dashed #aab8c2;
+      border-radius: 8px;
+      background: #f7f9fa;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .file-box input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .button {
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 9px 14px;
+      background: var(--text);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .button.secondary {
+      background: white;
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .preview-shell {
+      min-height: calc(100vh - 48px);
+      background: #f7f9fa;
+      padding: 14px;
+    }
+
+    .phone {
+      width: min(430px, 100%);
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .twitter-top {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+      border-bottom: 2px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      backdrop-filter: blur(10px);
+    }
+
+    .back {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 0;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      font-size: 19px;
+      line-height: 1;
+    }
+
+    .top-name {
+      min-width: 0;
+    }
+
+    .top-name strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .top-name span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .header-image {
+      height: 138px;
+      background: linear-gradient(120deg, #8ecae6, #2a9d8f 48%, #264653);
+      background-size: cover;
+      background-position: center;
+    }
+
+    .profile {
+      position: relative;
+      padding: 0 12px 12px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    .avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 4px solid #fff;
+      background: #cfd9de;
+      background-size: cover;
+      background-position: center;
+      margin-top: -45px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 28px;
+    }
+
+    .profile-main {
+      margin-top: 8px;
+    }
+
+    .display-name {
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.2;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .handle,
+    .meta,
+    .counts {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .bio {
+      margin: 9px 0;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .counts {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .counts b {
+      color: var(--text);
+    }
+
+    .tabs {
+      height: 42px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: 2px solid var(--line);
+      background: #fff;
+    }
+
+    .tab {
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 12px;
+      position: relative;
+    }
+
+    .tab.active {
+      color: var(--text);
+    }
+
+    .tab.active::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      width: 44px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--blue);
+    }
+
+    .tweet {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 9px;
+      padding: 11px 12px 8px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    .tweet-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #cfd9de;
+      background-size: cover;
+      background-position: center;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .tweet-body {
+      min-width: 0;
+    }
+
+    .tweet-head {
+      display: flex;
+      gap: 4px;
+      align-items: baseline;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      flex-wrap: wrap;
+    }
+
+    .tweet-head strong {
+      color: var(--text);
+      font-weight: 900;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tweet-text {
+      margin: 2px 0 8px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .tweet-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(72px, 1fr));
+      color: var(--muted);
+      max-width: 360px;
+      font-size: 11px;
+    }
+
+    .tweet-actions span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+    }
+
+    .empty {
+      padding: 36px 22px;
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .toast {
+      min-height: 20px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 940px) {
+      .app {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      .preview-shell {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .grid,
+      .file-row {
+        grid-template-columns: 1fr;
+      }
+
+      .app {
+        padding: 0;
+      }
+
+      .workspace,
+      .preview-shell,
+      .phone {
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+      }
+
+      .preview-shell {
+        padding: 0;
+      }
+
+      .header-image {
+        height: 138px;
+      }
+
+      .avatar {
+        width: 96px;
+        height: 96px;
+        margin-top: -48px;
+      }
+
+      .tweet-head strong {
+        max-width: 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="workspace" aria-label="트윗계정 만들기">
+      <div class="topbar">
+        <h1>트윗계정 메이커</h1>
+        <p class="sub">OOC 출력문을 붙여 넣으면 프로필과 트윗이 계정 화면처럼 정리됩니다.</p>
+        <p class="hint">
+          NPC 지침 복사 또는 PC 지침 복사를 눌러 OOC 출력 지침을 복사한 뒤, 생성된 내용을 OOC 출력문 칸에 붙여넣고 적용을 누르면 계정 미리보기에 반영됩니다.
+          이후 아래에서 헤더 이미지, 프사, 색상, 프로필 정보를 필요에 맞게 수정하고, 오른쪽 미리보기 화면을 직접 캡쳐해서 사용하시면 됩니다.
+        </p>
+      </div>
+
+      <div class="section">
+        <p class="section-title">이미지</p>
+        <div class="file-row">
+          <label class="file-box">
+            헤더 이미지 넣기
+            <input id="headerFile" type="file" accept="image/*">
+          </label>
+          <label class="file-box">
+            프사 넣기
+            <input id="avatarFile" type="file" accept="image/*">
+          </label>
+        </div>
+        <div class="grid" style="margin-top: 12px;">
+          <label>
+            헤더 색
+            <input id="headerColorInput" type="color" value="#8ecae6">
+          </label>
+          <label>
+            프사 색
+            <input id="avatarColorInput" type="color" value="#657786">
+          </label>
+        </div>
+      </div>
+
+      <div class="section">
+        <p class="section-title">프로필</p>
+        <div class="grid">
+          <label>
+            표시이름
+            <input id="nameInput" type="text" value="블루">
+          </label>
+          <label>
+            아이디
+            <input id="handleInput" type="text" value="@yjahn_blue">
+          </label>
+          <label>
+            팔로잉
+            <input id="followingInput" type="text" value="48">
+          </label>
+          <label>
+            팔로워
+            <input id="followersInput" type="text" value="921">
+          </label>
+          <label>
+            게시물 수
+            <input id="postCountInput" type="text" value="">
+          </label>
+        </div>
+        <label style="margin-top: 12px;">
+          바이오
+          <input id="bioInput" type="text" value="ARCH 물 속성 센티넬. 중요한 게 생겼다.">
+        </label>
+      </div>
+
+      <div class="section">
+        <p class="section-title">OOC 출력문</p>
+        <textarea id="rawInput" spellcheck="false"><프로필>
+[블루 / @yjahn_blue]
+[ARCH 물 속성 센티넬. 중요한 게 생겼다.]
+[팔로워 921 / 팔로잉 48]
+
+<블루 / @yjahn_blue / 3분 전>
+[오늘 날씨 진짜 좋다. 옆에 있는 사람은 더 좋고.]
+{9 / 2 / 28}
+
+<블루 / @yjahn_blue / 18분 전>
+[배고프다... 초밥... 초밥 먹는다...]
+{3 / 0 / 11}
+
+<블루 / @yjahn_blue / 34분 전>
+[아]
+{15 / 1 / 44}
+
+<블루 / @yjahn_blue / 1시간 전>
+[오늘부터 1일.]
+{28 / 6 / 99+}
+
+<블루 / @yjahn_blue / 2시간 전>
+[아쿠아리움 와 본 사람? 기념품 숍 추천 좀. 예쁜 걸로.]
+{11 / 0 / 19}</textarea>
+        <div class="actions" style="margin-top: 12px;">
+          <button class="button" id="applyButton" type="button">적용</button>
+          <button class="button secondary" id="copyNpcPromptButton" type="button">NPC 지침 복사</button>
+          <button class="button secondary" id="copyPcPromptButton" type="button">PC 지침 복사</button>
+          <button class="button secondary" id="clearButton" type="button">비우기</button>
+          <span class="toast" id="toast" aria-live="polite"></span>
+        </div>
+        <p class="hint">프로필 블록이 있으면 입력칸도 함께 채워집니다. 이미지는 따로 넣어 주세요.</p>
+      </div>
+    </section>
+
+    <section class="preview-shell" aria-label="계정 미리보기">
+      <div class="phone">
+        <div class="twitter-top">
+          <button class="back" type="button" aria-label="뒤로">‹</button>
+          <div class="top-name">
+            <strong id="topName">블루</strong>
+            <span id="tweetCount">5 posts</span>
+          </div>
+        </div>
+        <div class="header-image" id="headerPreview"></div>
+        <section class="profile">
+          <div class="avatar" id="avatarPreview">블</div>
+          <div class="profile-main">
+            <div class="display-name" id="profileName">블루</div>
+            <div class="handle" id="profileHandle">@yjahn_blue</div>
+            <div class="bio" id="profileBio">ARCH 물 속성 센티넬. 중요한 게 생겼다.</div>
+            <div class="counts">
+              <span><b id="followingCount">48</b> Following</span>
+              <span><b id="followersCount">921</b> Followers</span>
+            </div>
+          </div>
+        </section>
+        <nav class="tabs" aria-label="탭">
+          <div class="tab active">Posts</div>
+          <div class="tab">Replies</div>
+          <div class="tab">Media</div>
+        </nav>
+        <div id="tweets"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function makePrompt(entity, counterpart) {
+      return `OC: 롤플레잉 일시 중단.
+
+${entity}의 트위터 계정 페이지를 출력할 것.
+계정 상단에는 표시이름, 아이디, 바이오, 팔로워와 팔로잉 수를 포함하고, 그 아래에는 ${entity}가 올린 일상적인 트윗, 실수로 올린 글, 장난스러운 혼잣말, 심각한 짧은 글, 임무 관련 확인, 의미심장한 반응 등 다양한 분위기의 트윗 내역을 출력할 것.
+프사는 사용자가 직접 설정하므로 출력하지 말 것.
+설명, 해설, 상황 묘사, 감정 묘사, 괄호 설명, 번호 매기기, 목록 제목은 출력하지 말 것.
+오직 아래 출력 형식만 사용할 것.
+
+
+<프로필>
+[표시이름 / @아이디]
+[바이오]
+[팔로워 / 팔로잉]
+
+<표시이름 / @아이디 / 작성시간 >
+[트윗 내용]
+{댓글 수 / 리트윗 수 / 마음 수}
+
+작성 규칙:
+- 바이오는 ${entity}가 직접 적어 둔 자기소개처럼 작성한다.
+- 작성시간은 예: 3분 전, 12분 전, 1시간 전, 오후 11:08, 어제, 4월 29일 형식으로 쓴다.
+- 한 트윗에는 반드시 <표시이름 / @아이디 / 작성시간 > 형태의 헤더와 줄 아래의 [트윗 내용] 을 한 트윗으로 묶고 {댓글 수 / 리트윗 수 / 마음 수} 한 줄로 구성한다. 표시 이름, 아이디, 작성 시간을 절대 빼먹지 않는다.
+- 모든 트윗은 같은 ${entity}의 계정에 올라온 글이어야 한다.
+- 같은 사람이 연속으로 트윗하더라도 각 트윗마다 반드시 새 헤더를 사용하여 이름, 아이디, 작성 시간을 포함한다.
+- 유형은 반드시 “트윗”만 사용한다.
+- 트윗 내용이 길면 [ ] 안에서만 줄바꿈한다.
+- 트윗 내용 안에는 실제 트위터에 올라온 글처럼 본문만 쓴다.
+- 맞춤법과 띄어쓰기는 ${entity}의 캐릭터성에 따라 일부러 틀릴 수 있으며, 캐릭터성에 따라 이모티콘, 이모지, 해시태그 사용도 가능하다.
+- 일상 내용, 임무 내용, 잡담, 확인용 짧은 글, 의미심장한 반응, 실수로 올린 듯한 글 등을 섞어 가독성 있게 구성한다.
+- 총 10개의 트윗으로 구성한다.
+- 출력 형식 밖의 문장은 절대 쓰지 않는다.
+- 계정 정보와 트윗 내용은 ${entity}의 성격, 설정, 말투, 생활감, ${counterpart}와의 관계를 적극적으로 반영한다.`;
+    }
+
+    const npcPromptText = makePrompt("NPC", "PC");
+    const pcPromptText = makePrompt("PC", "NPC");
+
+    const state = {
+      headerImage: "",
+      avatarImage: "",
+      headerColor: "#8ecae6",
+      avatarColor: "#657786",
+      tweets: []
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function stripBox(value) {
+      return value.replace(/^\s*[\[\{<]/, "").replace(/[\]\}>]\s*$/, "").trim();
+    }
+
+    function parseBracketLine(line) {
+      const match = line.match(/^\s*\[(.*)\]\s*$/s);
+      return match ? match[1].trim() : line.trim();
+    }
+
+    function parseStats(line) {
+      const cleaned = stripBox(line);
+      const parts = cleaned.split("/").map((part) => part.trim());
+      return {
+        comments: parts[0]?.replace(/^댓글\s*/, "") || "0",
+        reposts: parts[1]?.replace(/^리트윗\s*/, "") || "0",
+        likes: parts[2]?.replace(/^마음\s*/, "") || "0"
+      };
+    }
+
+    function cleanCountValue(value) {
+      return (value || "")
+        .replace(/^[\s\-\[\]]+/, "")
+        .replace(/[\s\-\[\]]+$/, "")
+        .trim();
+    }
+
+    function parseProfileCounts(line) {
+      const cleaned = line
+        .replace(/^\s*-\s*/, "")
+        .replace(/^\s*\[/, "")
+        .replace(/\]\s*$/, "")
+        .trim();
+      const counts = {};
+      cleaned.split("/").forEach((part) => {
+        const item = part.trim();
+        const followerMatch = item.match(/^팔로워\s*(.+)$/);
+        const followingMatch = item.match(/^팔로잉\s*(.+)$/);
+        if (followerMatch) counts.followers = cleanCountValue(followerMatch[1]);
+        if (followingMatch) counts.following = cleanCountValue(followingMatch[1]);
+      });
+      return counts;
+    }
+
+    function collectBox(lines, startIndex, opener, closer) {
+      const first = lines[startIndex] || "";
+      const start = first.indexOf(opener);
+      if (start === -1) return { text: "", nextIndex: startIndex + 1 };
+
+      let text = first.slice(start + 1);
+      let index = startIndex;
+      while (index < lines.length) {
+        const close = text.lastIndexOf(closer);
+        if (close !== -1) {
+          return {
+            text: text.slice(0, close).trim(),
+            nextIndex: index + 1
+          };
+        }
+        index += 1;
+        text += "\n" + (lines[index] || "");
+      }
+      return { text: text.trim(), nextIndex: index };
+    }
+
+    function collectTweetBody(lines, startIndex) {
+      let index = startIndex;
+      const firstLine = lines[index] || "";
+      if (firstLine.trim().startsWith("[")) {
+        return collectBox(lines, index, "[", "]");
+      }
+
+      const bodyLines = [];
+      while (index < lines.length) {
+        const line = lines[index];
+        const trimmed = line.trim();
+        if (trimmed.startsWith("{") || trimmed.match(/^<[^<>]+>$/)) break;
+        bodyLines.push(line);
+        index += 1;
+      }
+
+      return {
+        text: bodyLines.join("\n").trim(),
+        nextIndex: index
+      };
+    }
+
+    function parseProfile(lines) {
+      const profileIndex = lines.findIndex((line) => line.trim() === "<프로필>");
+      if (profileIndex === -1) return;
+
+      const nameLine = parseBracketLine(lines[profileIndex + 1] || "");
+      const bioLine = parseBracketLine(lines[profileIndex + 2] || "");
+      const countsLine = parseBracketLine(lines[profileIndex + 3] || "");
+
+      if (nameLine.includes("/")) {
+        const [name, handle] = nameLine.split("/").map((part) => part.trim());
+        if (name) $("nameInput").value = name;
+        if (handle) $("handleInput").value = handle.startsWith("@") ? handle : "@" + handle;
+      }
+      if (bioLine) $("bioInput").value = bioLine;
+      if (countsLine) {
+        const counts = parseProfileCounts(countsLine);
+        if (counts.following) $("followingInput").value = counts.following;
+        if (counts.followers) $("followersInput").value = counts.followers;
+      }
+    }
+
+    function parseTweets(raw) {
+      const lines = raw.replace(/\r\n/g, "\n").split("\n");
+      parseProfile(lines);
+
+      const tweets = [];
+      let index = 0;
+      while (index < lines.length) {
+        const header = lines[index].trim();
+        const headerMatch = header.match(/^<([^<>]+)>$/);
+        if (!headerMatch || header === "<프로필>") {
+          index += 1;
+          continue;
+        }
+
+        const parts = headerMatch[1].split("/").map((part) => part.trim());
+        if (parts.length < 3) {
+          index += 1;
+          continue;
+        }
+
+        let bodyIndex = index + 1;
+        while (bodyIndex < lines.length && !lines[bodyIndex].trim()) bodyIndex += 1;
+        if (!lines[bodyIndex]?.trim()) {
+          index += 1;
+          continue;
+        }
+
+        const body = collectTweetBody(lines, bodyIndex);
+        let statsIndex = body.nextIndex;
+        while (statsIndex < lines.length && !lines[statsIndex].trim()) statsIndex += 1;
+        const statsLine = lines[statsIndex] || "{}";
+
+        tweets.push({
+          name: parts[0],
+          handle: parts[1].startsWith("@") ? parts[1] : "@" + parts[1],
+          time: parts.slice(2).join(" / "),
+          text: body.text,
+          stats: parseStats(statsLine),
+          order: tweets.length
+        });
+
+        index = statsIndex + 1;
+      }
+      return tweets.sort(sortTweetsByNewest);
+    }
+
+    function getTweetTimeRank(time) {
+      const value = String(time || "").trim();
+      let match = value.match(/^방금/);
+      if (match) return 0;
+      match = value.match(/^(\d+)\s*초\s*전/);
+      if (match) return Number(match[1]) / 60;
+      match = value.match(/^(\d+)\s*분\s*전/);
+      if (match) return Number(match[1]);
+      match = value.match(/^(\d+)\s*시간\s*전/);
+      if (match) return Number(match[1]) * 60;
+      if (/^오늘/.test(value)) return 12 * 60;
+      if (/^어제/.test(value)) return 24 * 60;
+      match = value.match(/^(\d+)\s*일\s*전/);
+      if (match) return Number(match[1]) * 24 * 60;
+      match = value.match(/^(오전|오후)\s*(\d{1,2}):(\d{2})/);
+      if (match) {
+        let hour = Number(match[2]);
+        const minute = Number(match[3]);
+        if (match[1] === "오후" && hour !== 12) hour += 12;
+        if (match[1] === "오전" && hour === 12) hour = 0;
+        return hour * 60 + minute;
+      }
+      match = value.match(/^(\d{1,2})월\s*(\d{1,2})일/);
+      if (match) return 100000 + Number(match[1]) * 31 * 24 * 60 + Number(match[2]) * 24 * 60;
+      return Number.POSITIVE_INFINITY;
+    }
+
+    function sortTweetsByNewest(a, b) {
+      const rankA = getTweetTimeRank(a.time);
+      const rankB = getTweetTimeRank(b.time);
+      if (rankA === Number.POSITIVE_INFINITY && rankB === Number.POSITIVE_INFINITY) {
+        return a.order - b.order;
+      }
+      if (rankA === rankB) return a.order - b.order;
+      return rankA - rankB;
+    }
+
+    function initials(name) {
+      return (name || "?").trim().slice(0, 1).toUpperCase();
+    }
+
+    function svgIcon(type) {
+      const icons = {
+        comment: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5A7.5 7.5 0 0 1 12 2h.5A7.5 7.5 0 0 1 20 9.5v.2a7.5 7.5 0 0 1-7.5 7.5H9l-4.2 3.1c-.6.4-1.4 0-1.3-.7l.8-4.4a7.5 7.5 0 0 1 .2-9.7Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+        repost: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10l-2.5-2.5M17 17H7l2.5 2.5M17 7v4M7 17v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        like: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.2-9.1C1.4 7.5 3.8 4 7.3 4c2 0 3.6 1.1 4.7 2.8C13.1 5.1 14.7 4 16.7 4c3.5 0 5.9 3.5 4.5 7.4-1.7 4.7-9.2 9.1-9.2 9.1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>'
+      };
+      return icons[type];
+    }
+
+    function render() {
+      const name = $("nameInput").value.trim() || "이름";
+      const handle = $("handleInput").value.trim() || "@id";
+      const bio = $("bioInput").value.trim();
+      const following = $("followingInput").value.trim() || "0";
+      const followers = $("followersInput").value.trim() || "0";
+      const postCount = $("postCountInput").value.trim() || state.tweets.length;
+
+      $("topName").textContent = name;
+      $("profileName").textContent = name;
+      $("profileHandle").textContent = handle.startsWith("@") ? handle : "@" + handle;
+      $("profileBio").textContent = bio || "바이오 없음";
+      $("followingCount").textContent = following;
+      $("followersCount").textContent = followers;
+      $("tweetCount").textContent = `${postCount} posts`;
+
+      $("headerPreview").style.backgroundColor = state.headerColor;
+      $("headerPreview").style.backgroundImage = state.headerImage ? `url("${state.headerImage}")` : "none";
+      $("avatarPreview").style.backgroundColor = state.avatarColor;
+      $("avatarPreview").style.backgroundImage = state.avatarImage ? `url("${state.avatarImage}")` : "none";
+      $("avatarPreview").textContent = state.avatarImage ? "" : initials(name);
+
+      const tweetsRoot = $("tweets");
+      if (!state.tweets.length) {
+        tweetsRoot.innerHTML = '<div class="empty">OOC 출력문을 붙여 넣고 적용하면 트윗이 여기에 떠.</div>';
+        return;
+      }
+
+      tweetsRoot.innerHTML = state.tweets.map((tweet) => {
+        const tweetName = tweet.name || name;
+        const tweetHandle = tweet.handle || handle;
+        const tweetAvatarStyle = state.avatarImage
+          ? `background-color:${state.avatarColor};background-image:url('${state.avatarImage}')`
+          : `background-color:${state.avatarColor};background-image:none`;
+        return `
+          <article class="tweet">
+            <div class="tweet-avatar" style="${tweetAvatarStyle}">${state.avatarImage ? "" : initials(tweetName)}</div>
+            <div class="tweet-body">
+              <div class="tweet-head">
+                <strong>${escapeHtml(tweetName)}</strong>
+                <span>${escapeHtml(tweetHandle)}</span>
+                <span>·</span>
+                <span>${escapeHtml(tweet.time)}</span>
+              </div>
+              <div class="tweet-text">${escapeHtml(tweet.text)}</div>
+              <div class="tweet-actions">
+                <span>${svgIcon("comment")}${escapeHtml(tweet.stats.comments)}</span>
+                <span>${svgIcon("repost")}${escapeHtml(tweet.stats.reposts)}</span>
+                <span>${svgIcon("like")}${escapeHtml(tweet.stats.likes)}</span>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function applyRaw(options = {}) {
+      state.tweets = parseTweets($("rawInput").value);
+      render();
+      if (!options.silent) {
+        showToast(`${state.tweets.length}개 트윗 적용됨`);
+      }
+    }
+
+    function showToast(text) {
+      $("toast").textContent = text;
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        $("toast").textContent = "";
+      }, 1800);
+    }
+
+    function readImage(input, key) {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        state[key] = reader.result;
+        render();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve) => {
+        if (!src) {
+          resolve(null);
+          return;
+        }
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => resolve(null);
+        image.src = src;
+      });
+    }
+
+    function drawCoverImage(context, image, x, y, width, height) {
+      if (!image) return;
+      const ratio = Math.max(width / image.width, height / image.height);
+      const drawWidth = image.width * ratio;
+      const drawHeight = image.height * ratio;
+      context.drawImage(
+        image,
+        x + (width - drawWidth) / 2,
+        y + (height - drawHeight) / 2,
+        drawWidth,
+        drawHeight
+      );
+    }
+
+    function drawCircleAvatar(context, image, x, y, size, color, letter) {
+      context.save();
+      context.beginPath();
+      context.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+      context.clip();
+      context.fillStyle = color;
+      context.fillRect(x, y, size, size);
+      if (image) {
+        drawCoverImage(context, image, x, y, size, size);
+      } else {
+        context.fillStyle = "#ffffff";
+        context.font = `900 ${Math.floor(size * 0.38)}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(letter, x + size / 2, y + size / 2 + 1);
+      }
+      context.restore();
+    }
+
+    function wrapLines(context, text, maxWidth) {
+      const sourceLines = String(text || "").split("\n");
+      const result = [];
+      sourceLines.forEach((source) => {
+        let line = "";
+        Array.from(source).forEach((char) => {
+          const next = line + char;
+          if (line && context.measureText(next).width > maxWidth) {
+            result.push(line);
+            line = char;
+          } else {
+            line = next;
+          }
+        });
+        result.push(line);
+      });
+      return result;
+    }
+
+    function drawWrappedText(context, text, x, y, maxWidth, lineHeight) {
+      const lines = wrapLines(context, text, maxWidth);
+      lines.forEach((line, index) => {
+        context.fillText(line, x, y + index * lineHeight);
+      });
+      return lines.length * lineHeight;
+    }
+
+    function drawLine(context, y, width) {
+      context.fillStyle = "#b8c5ce";
+      context.fillRect(0, Math.round(y), width, 2);
+    }
+
+    function drawActionIcon(context, type, x, y, color) {
+      context.save();
+      context.strokeStyle = color;
+      context.lineWidth = 1.8;
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      if (type === "comment") {
+        context.strokeRect(x + 2, y + 3, 13, 10);
+        context.beginPath();
+        context.moveTo(x + 6, y + 13);
+        context.lineTo(x + 4, y + 17);
+        context.lineTo(x + 10, y + 13);
+        context.stroke();
+      }
+      if (type === "repost") {
+        context.beginPath();
+        context.moveTo(x + 3, y + 6);
+        context.lineTo(x + 15, y + 6);
+        context.lineTo(x + 12, y + 3);
+        context.moveTo(x + 15, y + 12);
+        context.lineTo(x + 3, y + 12);
+        context.lineTo(x + 6, y + 15);
+        context.stroke();
+      }
+      if (type === "like") {
+        context.beginPath();
+        context.moveTo(x + 9, y + 16);
+        context.bezierCurveTo(x - 2, y + 9, x + 2, y + 1, x + 9, y + 6);
+        context.bezierCurveTo(x + 16, y + 1, x + 20, y + 9, x + 9, y + 16);
+        context.stroke();
+      }
+      context.restore();
+    }
+
+    async function saveCanvasApproxImage() {
+      const width = 620;
+      const margin = 16;
+      const tweetTextWidth = width - 92;
+      const headerImage = await loadImage(state.headerImage);
+      const avatarImage = await loadImage(state.avatarImage);
+      const name = $("nameInput").value.trim() || "이름";
+      const handle = $("handleInput").value.trim() || "@id";
+      const bio = $("bioInput").value.trim() || "바이오 없음";
+      const following = $("followingInput").value.trim() || "0";
+      const followers = $("followersInput").value.trim() || "0";
+      const postCount = $("postCountInput").value.trim() || state.tweets.length;
+
+      const measureCanvas = document.createElement("canvas");
+      const measure = measureCanvas.getContext("2d");
+      measure.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      const bioHeight = wrapLines(measure, bio, width - margin * 2).length * 22;
+      const tweetHeights = state.tweets.map((tweet, index) => {
+        measure.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        return Math.max(104, 82 + wrapLines(measure, tweet.text, tweetTextWidth).length * 22);
+      });
+      const topHeight = 52;
+      const headerHeight = 200;
+      const profileHeight = 174 + bioHeight;
+      const tabsHeight = 52;
+      const height = topHeight + headerHeight + profileHeight + tabsHeight + tweetHeights.reduce((sum, item) => sum + item, 0);
+      const scale = 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const context = canvas.getContext("2d");
+      context.scale(scale, scale);
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, width, height);
+
+      let y = 0;
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, y, width, topHeight);
+      context.fillStyle = "#0f1419";
+      context.font = '400 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      context.fillText("‹", 18, y + 34);
+      context.font = '900 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      context.fillText(name, 64, y + 22);
+      context.fillStyle = "#536471";
+      context.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      context.fillText(`${postCount} posts`, 64, y + 41);
+      drawLine(context, y + topHeight, width);
+      y += topHeight;
+
+      context.fillStyle = state.headerColor;
+      context.fillRect(0, y, width, headerHeight);
+      drawCoverImage(context, headerImage, 0, y, width, headerHeight);
+      y += headerHeight;
+
+      const avatarSize = 132;
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, y, width, profileHeight);
+      context.save();
+      context.beginPath();
+      context.arc(margin + avatarSize / 2, y, avatarSize / 2 + 4, 0, Math.PI * 2);
+      context.fillStyle = "#ffffff";
+      context.fill();
+      context.restore();
+      drawCircleAvatar(context, avatarImage, margin, y - avatarSize / 2, avatarSize, state.avatarColor, initials(name));
+
+      let profileY = y + 104;
+      context.fillStyle = "#0f1419";
+      context.font = '900 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      context.fillText(name, margin, profileY);
+      profileY += 22;
+      context.fillStyle = "#536471";
+      context.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      context.fillText(handle.startsWith("@") ? handle : "@" + handle, margin, profileY);
+      profileY += 31;
+      context.fillStyle = "#0f1419";
+      context.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      const usedBioHeight = drawWrappedText(context, bio, margin, profileY, width - margin * 2, 22);
+      profileY += usedBioHeight + 14;
+      context.fillStyle = "#0f1419";
+      context.font = '700 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      context.fillText(following, margin, profileY);
+      const followingWidth = context.measureText(following).width;
+      context.fillStyle = "#536471";
+      context.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      context.fillText(" Following", margin + followingWidth + 2, profileY);
+      const nextX = margin + followingWidth + 90;
+      context.fillStyle = "#0f1419";
+      context.font = '700 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      context.fillText(followers, nextX, profileY);
+      const followersWidth = context.measureText(followers).width;
+      context.fillStyle = "#536471";
+      context.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      context.fillText(" Followers", nextX + followersWidth + 2, profileY);
+      context.fillStyle = "#ffffff";
+      y += profileHeight;
+      context.fillRect(0, y, width, tabsHeight);
+      drawLine(context, y, width);
+      context.fillStyle = "#0f1419";
+      context.font = '800 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      context.textAlign = "center";
+      context.fillText("Posts", width / 6, y + 31);
+      context.fillStyle = "#536471";
+      context.fillText("Replies", width / 2, y + 31);
+      context.fillText("Media", width * 5 / 6, y + 31);
+      context.fillStyle = "#1d9bf0";
+      context.fillRect(width / 6 - 29, y + tabsHeight - 4, 58, 4);
+      context.textAlign = "left";
+      y += tabsHeight;
+      drawLine(context, y, width);
+
+      state.tweets.forEach((tweet, index) => {
+        const tweetY = y;
+        const tweetHeight = tweetHeights[index];
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, tweetY, width, tweetHeight);
+        drawCircleAvatar(context, avatarImage, margin, tweetY + 14, 48, state.avatarColor, initials(tweet.name || name));
+
+        const textX = 76;
+        let textY = tweetY + 30;
+        context.fillStyle = "#0f1419";
+        context.font = '900 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        context.fillText(tweet.name || name, textX, textY);
+        const nameWidth = Math.min(context.measureText(tweet.name || name).width, 220);
+        context.fillStyle = "#536471";
+        context.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        context.fillText(` ${tweet.handle || handle} · ${tweet.time}`, textX + nameWidth + 4, textY);
+        textY += 25;
+        context.fillStyle = "#0f1419";
+        context.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        drawWrappedText(context, tweet.text, textX, textY, tweetTextWidth, 22);
+        const actionY = tweetY + tweetHeight - 21;
+
+        context.fillStyle = "#536471";
+        context.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        drawActionIcon(context, "comment", textX, actionY - 14, "#536471");
+        context.fillText(tweet.stats.comments, textX + 24, actionY);
+        drawActionIcon(context, "repost", textX + 112, actionY - 14, "#536471");
+        context.fillStyle = "#536471";
+        context.fillText(tweet.stats.reposts, textX + 136, actionY);
+        drawActionIcon(context, "like", textX + 224, actionY - 15, "#536471");
+        context.fillStyle = "#536471";
+        context.fillText(tweet.stats.likes, textX + 248, actionY);
+
+        drawLine(context, tweetY + tweetHeight - 2, width);
+        y += tweetHeight;
+      });
+
+      context.strokeStyle = "#c4cfd6";
+      context.lineWidth = 2;
+      context.strokeRect(1, 1, width - 2, height - 2);
+
+      const link = document.createElement("a");
+      link.download = "tweet-account.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      showToast("PNG 저장됨");
+    }
+
+    function inlineComputedStyles(source, clone) {
+      const sourceElements = [source, ...source.querySelectorAll("*")];
+      const cloneElements = [clone, ...clone.querySelectorAll("*")];
+      sourceElements.forEach((sourceElement, index) => {
+        const cloneElement = cloneElements[index];
+        if (!cloneElement || !(sourceElement instanceof Element)) return;
+        const computed = window.getComputedStyle(sourceElement);
+        let cssText = "";
+        for (let i = 0; i < computed.length; i += 1) {
+          const property = computed[i];
+          cssText += `${property}:${computed.getPropertyValue(property)};`;
+        }
+        cloneElement.setAttribute("style", `${cssText}${cloneElement.getAttribute("style") || ""}`);
+      });
+    }
+
+    function getPageStyles() {
+      return Array.from(document.styleSheets)
+        .map((sheet) => {
+          try {
+            return Array.from(sheet.cssRules).map((rule) => rule.cssText).join("\n");
+          } catch {
+            return "";
+          }
+        })
+        .join("\n");
+    }
+
+    async function saveDomPreviewImage() {
+      const source = document.querySelector(".phone");
+      const width = Math.ceil(source.scrollWidth);
+      const height = Math.ceil(source.scrollHeight);
+      const clone = source.cloneNode(true);
+      clone.style.width = `${width}px`;
+      clone.style.height = `${height}px`;
+      clone.style.margin = "0";
+      clone.style.borderRadius = "0";
+      clone.querySelector(".twitter-top").style.position = "static";
+      inlineComputedStyles(source, clone);
+
+      const wrapper = document.createElement("div");
+      wrapper.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+      wrapper.style.cssText = "margin:0;padding:0;background:#ffffff;";
+      const style = document.createElement("style");
+      style.textContent = getPageStyles();
+      wrapper.appendChild(style);
+      wrapper.appendChild(clone);
+
+      const serialized = new XMLSerializer().serializeToString(wrapper);
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+          <foreignObject x="0" y="0" width="100%" height="100%">${serialized}</foreignObject>
+        </svg>
+      `;
+      const svgUrl = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
+      const image = new Image();
+      image.decoding = "async";
+      const loaded = new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = reject;
+      });
+      image.src = svgUrl;
+      await loaded;
+
+      const scale = 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.scale(scale, scale);
+      context.drawImage(image, 0, 0, width, height);
+      URL.revokeObjectURL(svgUrl);
+
+      const link = document.createElement("a");
+      link.download = "tweet-account.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      showToast("PNG 저장됨");
+    }
+
+    async function savePreviewImage() {
+      try {
+        await saveDomPreviewImage();
+      } catch {
+        await saveCanvasApproxImage();
+        showToast("대체 방식으로 PNG 저장됨");
+      }
+    }
+
+    let rawInputTimer;
+    $("applyButton").addEventListener("click", () => applyRaw());
+    $("rawInput").addEventListener("input", () => {
+      window.clearTimeout(rawInputTimer);
+      rawInputTimer = window.setTimeout(() => applyRaw({ silent: true }), 350);
+    });
+    $("clearButton").addEventListener("click", () => {
+      $("rawInput").value = "";
+      state.tweets = [];
+      render();
+    });
+    $("copyNpcPromptButton").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(npcPromptText);
+      showToast("NPC 지침 복사됨");
+    });
+    $("copyPcPromptButton").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(pcPromptText);
+      showToast("PC 지침 복사됨");
+    });
+    $("headerFile").addEventListener("change", (event) => readImage(event.target, "headerImage"));
+    $("avatarFile").addEventListener("change", (event) => readImage(event.target, "avatarImage"));
+    $("headerColorInput").addEventListener("input", (event) => {
+      state.headerColor = event.target.value;
+      render();
+    });
+    $("avatarColorInput").addEventListener("input", (event) => {
+      state.avatarColor = event.target.value;
+      render();
+    });
+    ["nameInput", "handleInput", "bioInput", "followingInput", "followersInput", "postCountInput"].forEach((id) => {
+      $(id).addEventListener("input", render);
+    });
+
+    applyRaw();
+  </script>
+</body>
+</html>
